@@ -4,8 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class Transaction(var name: String="",
-                  val payers: MutableList<Pair<Person,Double>> = mutableListOf(),
-                  val payees: MutableList<Pair<Person,Double>> = mutableListOf(),
+                  val payers: List<Pair<Person,Double>>,
+                  val payees: List<Pair<Person,Double>>,
 ) {
     var totalCost: Double = 0.0
         get() = payers.sumOf { it.second }

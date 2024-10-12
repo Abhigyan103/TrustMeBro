@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -21,13 +22,12 @@ val EventKey = object : CreationExtras.Key<Event> {}
 class TransactionBottomSheetViewModel(val event: Event): ViewModel() {
     var transactionName = mutableStateOf("")
     private set
-    val payersList = mutableStateOf(listOf<Pair<Person,Double>>())
-    val payeesList = mutableStateOf(listOf<Pair<Person,Double>>())
+    val payersList = mutableStateListOf<Pair<Person,Double>>()
+    val payeesList = mutableStateListOf<Pair<Person,Double>>()
     fun updateName(newName : String){
         transactionName.value = newName
     }
-    fun updateListCount(listState: MutableState<List<Pair<Person, Double>>>, count: Int){
-        val list = listState.value.toMutableList()
+    fun updateListCount(list: SnapshotStateList<Pair<Person, Double>>, count: Int){
         if(list.size > count){
             while (list.size!=count){
                 list.removeLast()
@@ -41,6 +41,5 @@ class TransactionBottomSheetViewModel(val event: Event): ViewModel() {
                 remainingPeople.minus(person)
             }
         }
-        listState.value=list
     }
 }

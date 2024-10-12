@@ -20,7 +20,7 @@ class EventsViewModel(
         private set
 
     fun addNewEvent(event: Event){
-        events = events.toMutableList().also { it.add(event) }
+        events += event
     }
     fun deleteEvent(){
         /* TODO */

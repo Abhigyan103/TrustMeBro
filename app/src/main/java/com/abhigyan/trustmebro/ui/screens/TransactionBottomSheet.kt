@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -96,8 +97,8 @@ fun TransactionBottomSheet(showSheet: MutableState<Boolean>, event: Event){
                     .padding(16.dp)
                     .clip(RoundedCornerShape(8.dp)), thickness = 2.dp)
             ElevatedButton(onClick = {
-                val transaction = Transaction(transactionName,viewModel.payersList.value.toMutableList(),viewModel.payeesList.value.toMutableList())
-                event.addTransaction(transaction)
+                val transaction = Transaction(transactionName,viewModel.payersList,viewModel.payeesList)
+                event.transactions+=transaction
             }) {
                 Text(text = "Save")
             }
@@ -106,37 +107,24 @@ fun TransactionBottomSheet(showSheet: MutableState<Boolean>, event: Event){
 }
 
 @Composable
-fun PersonWithAmountInput(people: List<Person>, paidPeople: MutableList<Person>, cb : (Person, Double)->Unit){
-    val peopleList  = people.toMutableList()
-    var selectedPerson:Person? = null
-    var selectedAmount:Double = 0.0
-    peopleList.removeAll(paidPeople)
+fun PersonWithAmountInput(people: List<Person>, inputList: SnapshotStateList<Pair<Person, Double>>, index: Int){
+    val peopleList  = people - inputList.map { it.first }.toSet()
     Row(
         Modifier
             .fillMaxSize()
             .height(50.dp)) {
-        DropdownTextField(modifier = Modifier.fillMaxWidth(0.5f), options = peopleList) {
-            if(selectedPerson!=null){
-                if (it!=selectedPerson){
-                    paidPeople.remove(selectedPerson)
-                    paidPeople.add(it)
-                }
-            }else {
-                paidPeople.add(it)
-                selectedPerson?.let { it1 -> cb(it1, selectedAmount) }
-            }
-            selectedPerson=it
+        DropdownTextField(modifier = Modifier.fillMaxWidth(0.5f), options = peopleList, initialValue = inputList[index].first) {
+            inputList[index] = inputList[index].copy(first = it)
         }
         Box(modifier = Modifier.width(20.dp))
         CurrencyInput(Modifier.fillMaxWidth()){
-            selectedAmount=it
-            selectedPerson?.let { it1 -> cb(it1, selectedAmount) }
+            inputList[index] = inputList[index].copy(second = it)
         }
     }
 }
 
 @Composable
-fun DynamicListPersonWithAmount(viewModel: TransactionBottomSheetViewModel, people: List<Person>, inputList: MutableState<List<Pair<Person, Double>>>){
+fun DynamicListPersonWithAmount(viewModel: TransactionBottomSheetViewModel, people: List<Person>, inputList: SnapshotStateList<Pair<Person, Double>>){
     val amountStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
     var totalPeople by remember {
         mutableStateOf("")
@@ -162,12 +150,8 @@ fun DynamicListPersonWithAmount(viewModel: TransactionBottomSheetViewModel, peop
             label = {Text("Total Number of Payers")})
         Box(modifier = Modifier.height(8.dp))
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
-            itemsIndexed(inputList.value){i,item->
-                PersonWithAmountInput(people = people, paidPeople = viewModel.payersList.value.map { item.first }.toMutableList()){person, amount ->
-                    val edited = inputList.value.toMutableList()
-                    edited[i]= Pair(person,amount)
-                    inputList.value = edited
-                }
+            itemsIndexed(inputList){i,item->
+                PersonWithAmountInput(people = people,inputList= inputList, index = i)
             }
         }
     }

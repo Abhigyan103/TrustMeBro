@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -28,7 +29,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import com.abhigyan.trustmebro.calculator.types.Bill
 import com.abhigyan.trustmebro.calculator.types.Event
+import com.abhigyan.trustmebro.calculator.types.Person
 import com.abhigyan.trustmebro.calculator.types.Transaction
 import com.abhigyan.trustmebro.ui.utils.MyAppBar
 import com.abhigyan.trustmebro.ui.widgets.TransactionItem
@@ -36,10 +39,8 @@ import com.abhigyan.trustmebro.ui.widgets.TransactionItem
 
 @Composable
 fun TransactionsScreen(event: Event) {
-    var newEvent by remember {
-        mutableStateOf(event)
-    }
-    val transactionsSize by remember{ derivedStateOf { newEvent.transactions.size } }
+
+//    val transactionsSize by remember{ derivedStateOf { newEvent.transactions.size } }
     val showSheet = remember { mutableStateOf(false) }
     Scaffold(
         topBar = { MyAppBar(title = "Transactions") },
@@ -55,7 +56,7 @@ fun TransactionsScreen(event: Event) {
         if(showSheet.value) {
             TransactionBottomSheet(showSheet, event = event)
         }
-        if(transactionsSize==0){
+        if(event.transactions.isEmpty()){
             Box(modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize(), contentAlignment = Alignment.Center){
@@ -63,10 +64,10 @@ fun TransactionsScreen(event: Event) {
             }
         }else {
             LazyColumn(modifier = Modifier.padding(innerPadding)) {
-                itemsIndexed(newEvent.transactions){i, it->
-                        TransactionItem(transaction = it, onDelete={
-                            newEvent.transactions-=it
-                        })
+                items(event.transactions){ it->
+                    TransactionItem(transaction = it, onDelete={
+                        event.transactions-=it
+                    })
                 }
             }
         }
@@ -76,8 +77,5 @@ fun TransactionsScreen(event: Event) {
 @Preview
 @Composable
 fun TransactionsScreenPreview() {
-    val event =Event("Bhutan")
-    event.transactions.add(Transaction("Transaction 1"))
-    event.transactions.add(Transaction("Transaction 2"))
-    TransactionsScreen(event)
+    TransactionsScreen(getSampleEvent())
 }
