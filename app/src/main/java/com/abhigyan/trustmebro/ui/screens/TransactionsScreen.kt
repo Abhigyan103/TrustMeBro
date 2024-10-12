@@ -41,9 +41,6 @@ fun TransactionsScreen(event: Event) {
     }
     val transactionsSize by remember{ derivedStateOf { newEvent.transactions.size } }
     val showSheet = remember { mutableStateOf(false) }
-    var dropdownExpandedList by remember {
-        mutableStateOf(List(transactionsSize){false})
-    }
     Scaffold(
         topBar = { MyAppBar(title = "Transactions") },
         floatingActionButton = { FloatingActionButton(onClick = {
@@ -67,32 +64,9 @@ fun TransactionsScreen(event: Event) {
         }else {
             LazyColumn(modifier = Modifier.padding(innerPadding)) {
                 itemsIndexed(newEvent.transactions){i, it->
-                    Box{
-                        DropdownMenu(expanded = dropdownExpandedList[i], onDismissRequest = { dropdownExpandedList = dropdownExpandedList.toMutableList().also {
-                            it[i] = false
-                        } },
-                            offset = DpOffset(250.dp, (-50).dp)
-                        ) {
-                            DropdownMenuItem(text = { Text("Delete") }, leadingIcon = { Icon(
-                                imageVector = Icons.Rounded.Delete,
-                                contentDescription = "Delete transaction",
-                                tint = Color(0xFFEE4B2B)
-                            ) }, onClick = {
-                            newEvent = newEvent.apply {
-                                deleteTransaction(i)
-                            }.copy()
-                                val mutDropdownList = dropdownExpandedList.toMutableList()
-                                mutDropdownList.removeAt(i)
-                                dropdownExpandedList = mutDropdownList
-                            })
-                        }
-                        TransactionItem(transaction = it,onHold={
-                            dropdownExpandedList = dropdownExpandedList.toMutableList().also {
-                                it[i] = true
-                            }
-                        }, onClick={})
-
-                    }
+                        TransactionItem(transaction = it, onDelete={
+                            newEvent.transactions-=it
+                        })
                 }
             }
         }
