@@ -20,10 +20,22 @@ import com.abhigyan.trustmebro.data.EventsRepository
 val EventKey = object : CreationExtras.Key<Event> {}
 
 class TransactionBottomSheetViewModel(val event: Event): ViewModel() {
-    var transactionName = mutableStateOf("")
+    lateinit var transactionName : MutableState<String>
     private set
-    val payersList = mutableStateListOf<Pair<Person,Double>>()
-    val payeesList = mutableStateListOf<Pair<Person,Double>>()
+    lateinit var payersList: SnapshotStateList<Pair<Person,Double>>
+    lateinit var payeesList: SnapshotStateList<Pair<Person,Double>>
+
+    init {
+        initialize()
+    }
+    fun reset(){
+        initialize()
+    }
+    private fun initialize(){
+        transactionName = mutableStateOf("")
+        payeesList = mutableStateListOf()
+        payersList = mutableStateListOf()
+    }
     fun updateName(newName : String){
         transactionName.value = newName
     }
@@ -34,11 +46,11 @@ class TransactionBottomSheetViewModel(val event: Event): ViewModel() {
             }
         }else if(list.size < count) {
             val addedPeople = list.map { it.first }.toSet()
-            val remainingPeople = event.people.subtract(addedPeople)
+            val remainingPeople = (event.people- addedPeople).toMutableSet()
             while (list.size!=count){
                 val person = remainingPeople.random()
                 list.add(Pair(person,0.0))
-                remainingPeople.minus(person)
+                remainingPeople-=person
             }
         }
     }

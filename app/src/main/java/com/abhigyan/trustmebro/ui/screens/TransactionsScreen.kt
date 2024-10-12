@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,23 +30,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.abhigyan.trustmebro.calculator.types.Bill
 import com.abhigyan.trustmebro.calculator.types.Event
 import com.abhigyan.trustmebro.calculator.types.Person
 import com.abhigyan.trustmebro.calculator.types.Transaction
+import com.abhigyan.trustmebro.presentation.TransactionBottomSheetViewModel
 import com.abhigyan.trustmebro.ui.utils.MyAppBar
 import com.abhigyan.trustmebro.ui.widgets.TransactionItem
 
 
 @Composable
 fun TransactionsScreen(event: Event) {
-
-//    val transactionsSize by remember{ derivedStateOf { newEvent.transactions.size } }
-    val showSheet = remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
+    var listSize by remember{ mutableIntStateOf(event.transactions.size) }
     Scaffold(
         topBar = { MyAppBar(title = "Transactions") },
         floatingActionButton = { FloatingActionButton(onClick = {
-            showSheet.value=true
+            showSheet=true
         }, containerColor = MaterialTheme.colorScheme.primary) {
             Row(Modifier.padding(8.dp,0.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "New transaction")
@@ -53,10 +57,10 @@ fun TransactionsScreen(event: Event) {
             }
         }}
     ) { innerPadding->
-        if(showSheet.value) {
-            TransactionBottomSheet(showSheet, event = event)
+        if(showSheet) {
+            TransactionBottomSheet(event,onDismiss = {showSheet =false})
         }
-        if(event.transactions.isEmpty()){
+        if(listSize==0){
             Box(modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize(), contentAlignment = Alignment.Center){
@@ -67,6 +71,7 @@ fun TransactionsScreen(event: Event) {
                 items(event.transactions){ it->
                     TransactionItem(transaction = it, onDelete={
                         event.transactions-=it
+                        listSize=event.transactions.size
                     })
                 }
             }

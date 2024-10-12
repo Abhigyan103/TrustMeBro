@@ -1,6 +1,7 @@
 package com.abhigyan.trustmebro.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -57,7 +59,7 @@ import com.abhigyan.trustmebro.ui.utils.DropdownTextField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TransactionBottomSheet(showSheet: MutableState<Boolean>, event: Event){
+fun TransactionBottomSheet(event: Event,onDismiss:()->Unit){
     val viewModel = viewModel<TransactionBottomSheetViewModel>(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -66,7 +68,10 @@ fun TransactionBottomSheet(showSheet: MutableState<Boolean>, event: Event){
         }
     )
     val transactionName by viewModel.transactionName
-    ModalBottomSheet(onDismissRequest = { showSheet.value=false }) {
+    ModalBottomSheet(onDismissRequest = {
+        onDismiss()
+        viewModel.reset()
+    }) {
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(10.dp),
@@ -84,7 +89,7 @@ fun TransactionBottomSheet(showSheet: MutableState<Boolean>, event: Event){
                     .width(100.dp)
                     .padding(16.dp)
                     .clip(RoundedCornerShape(8.dp)), thickness = 2.dp)
-            DynamicListPersonWithAmount(viewModel, people = event.people, inputList = viewModel.payersList)
+            DynamicListPersonWithAmount(viewModel, people = viewModel.event.people, inputList = viewModel.payersList)
             HorizontalDivider(
                 Modifier
                     .width(100.dp)
@@ -96,11 +101,20 @@ fun TransactionBottomSheet(showSheet: MutableState<Boolean>, event: Event){
                     .width(100.dp)
                     .padding(16.dp)
                     .clip(RoundedCornerShape(8.dp)), thickness = 2.dp)
-            ElevatedButton(onClick = {
-                val transaction = Transaction(transactionName,viewModel.payersList,viewModel.payeesList)
-                event.transactions+=transaction
-            }) {
-                Text(text = "Save")
+            Row(Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceEvenly) {
+                ElevatedButton(onClick = {
+                    onDismiss()
+                    viewModel.reset()
+                }) {
+                    Text(text = "Cancel")
+                }
+                Button(onClick = {
+                    val transaction =
+                        Transaction(transactionName, viewModel.payersList, viewModel.payeesList)
+                    viewModel.event.transactions += transaction
+                }) {
+                    Text(text = "Save")
+                }
             }
         }
     }
@@ -152,6 +166,7 @@ fun DynamicListPersonWithAmount(viewModel: TransactionBottomSheetViewModel, peop
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             itemsIndexed(inputList){i,item->
                 PersonWithAmountInput(people = people,inputList= inputList, index = i)
+                Box(modifier = Modifier.height(8.dp))
             }
         }
     }
