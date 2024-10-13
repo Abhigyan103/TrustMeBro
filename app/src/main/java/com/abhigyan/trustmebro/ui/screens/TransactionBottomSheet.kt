@@ -16,10 +16,14 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -34,12 +38,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -56,10 +62,11 @@ import com.abhigyan.trustmebro.calculator.types.Transaction
 import com.abhigyan.trustmebro.presentation.TransactionBottomSheetViewModel
 import com.abhigyan.trustmebro.ui.utils.CurrencyInput
 import com.abhigyan.trustmebro.ui.utils.DropdownTextField
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TransactionBottomSheet(event: Event,onDismiss:()->Unit){
+fun TransactionBottomSheet(event: Event,onDismiss: ()->Unit){
     val viewModel = viewModel<TransactionBottomSheetViewModel>(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -67,11 +74,18 @@ fun TransactionBottomSheet(event: Event,onDismiss:()->Unit){
             }
         }
     )
+    val bottomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+    val coroutineScope = rememberCoroutineScope()
     val transactionName by viewModel.transactionName
     ModalBottomSheet(onDismissRequest = {
-        onDismiss()
-        viewModel.reset()
-    }) {
+        if(bottomSheetState.isVisible) {
+            coroutineScope.launch { bottomSheetState.hide() }
+            onDismiss()
+            viewModel.reset()
+        }
+    }, sheetState = bottomSheetState) {
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(10.dp),
@@ -83,6 +97,12 @@ fun TransactionBottomSheet(event: Event,onDismiss:()->Unit){
                 textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 colors = TextFieldDefaults.colors().copy(unfocusedContainerColor = Color.Transparent, focusedContainerColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Edit,
+                        contentDescription = null
+                    )
+                },
                 modifier = Modifier.fillMaxWidth())
             HorizontalDivider(
                 Modifier
